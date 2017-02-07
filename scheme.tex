@@ -1,0 +1,87 @@
+\section{Our Construction}
+Let $\ell$ be the length of predicate and attribute vectors. Let $q$ and $m$ be positive integers. Let $\sigma$ and $\alpha$ be positive real Gaussian parameters. Define $k=\lfloor \log_{2}q\rfloor$. 
+\begin{description}
+\item $\setup(1^{\lambda},1^{\ell})$: On input a security parameter $\lambda$ and a parameter $\ell$ denoting the length of predicate and attribute vectors, do:
+\begin{enumerate}
+  \item Use the algorithm $\trapgen(q, n, m$) to generate a random matrix $\mat{A} \in \Z^{n \times m}_{q}$ together with a trapdoor $\mat{R}_{\mat{A}}$.
+  \item Choose a random matrix $\mat{B} \in \Z^{n \times m}_{q}$.
+  \item Choose a random vector $\vec{u} \in \Z^{n}_{q}$.
+\end{enumerate}
+Output $\pp=(\mat{A}, \mat{B}, \vec{u}), \msk=\mat{R}_{\mat{A}}$.
+
+\item $\keygen(\pp,\msk,\vec{v})$: On input the public parameters $\pp$, the master secret key $\msk$, and a predicate vector $\vec{v}=(v_{1},...,v_{\ell}) \in \Z^{\ell}_{q}$, do:
+\begin{enumerate}
+\item Define the input-encoding matrices
+\begin{equation}
+\mat{V}^{'}= \begin{bmatrix}
+v_{1} \mat{I}_{n}\\
+v_{2} \mat{I}_{n}\\
+\vdots\\
+v_{l} \mat{I}_{n}
+\end{bmatrix} \in \Z^{ln \times n},\mat{V}=\G^{-1}_{nl,l^{'},m}(\mat{V}^{'}.\G_{n,2,m}) \in [\ell^{'}]^{m \times m}.
+\end{equation}
+
+\item Define the  matrix $\mat{U}=\mat{B} \cdot \mat{V} \in \Z^{n \times m}_{q}, \mat{A}_{\vec{v}}=[\mat{A}|\mat{U}]$.
+\item Using the master secret key $\msk=(\mat{R}_{\mat{A}},\sigma)$, compute $\vec{r} \leftarrow \sampled(\mat{A}_{\vec{v}},\mat{R}_{\mat{A}},\textbf{I,u},\sigma$). Then $\vec{r}$ is a vector in $\Z^{2m}$ satisfying $\mat{A}_{\vec{v}} \cdot \vec{r}=\vec{u} \bmod q$.
+\end{enumerate}
+Output the secret key $\sk_{\vec{v}}=\vec{r}$.
+\leo{continue from here}
+\item $\enc(\pp,\vec{w},m)$: On input public parameters $\pp$, an attribute vectors $\vec{w}$, and a message $m \in \{0,1\}$, do:
+\begin{enumerate}
+\item Choose a uniformly random $\vec{s}\xleftarrow{\$} \Z^{n}_{q}$.
+
+\item Choose a noise vector $\vec{e}_{0}\leftarrow D_{\Z^{m}_{q},\alpha}$ and a noise term $e\leftarrow D_{\Z_{q},\alpha}$ 
+
+\item Compute $\vec{c}_{0}=\vec{s}^{T}\textbf{A}+\vec{e}^{T}_{0}$.
+
+\item Define the matrix
+\begin{equation}
+\textbf{W}^{'}= \begin{bmatrix}
+w_{1} \textbf{I}_{n}&w_{2} \textbf{I}_{n}&\ldots&w_{l} \textbf{I}_{n}
+\end{bmatrix} \in \Z^{n \times ln},~~~ \textbf{W}=\textbf{W}^{'}.\textbf{G}_{nl,l^{'},m} \in \Z^{n \times m}_{q}.
+\end{equation}
+Pick a random matrix $\textbf{R}\xleftarrow{\$} \{-1,1\}^{m \times m}$, define error vector $\vec{e}^{T}_{1}=\vec{c}^{T}_{0}\textbf{R}$. Set
+\begin{equation}
+\vec{c}_{1}=\vec{s}^{T}(\textbf{B}+\textbf{W})+\vec{e}^{T}_{1},~~~c_{2}=\vec{s}^{T}\vec{u}+e+\lfloor \frac{q}{2} \rfloor m.
+\end{equation}
+\end{enumerate}
+Output ciphertext  $\vec{ct}=(\vec{c}_{0},\vec{c}_{1},c_{2})$.
+\item $\dec(\pp,\textbf{sk}_{v},\vec{ct},\vec{v})$: On input public parameters $\pp$ ,a secret key $\textbf{sk}_{v}$ for predicate vector $\vec{v}$, and a ciphertext $\vec{ct}$, do:
+\begin{enumerate}
+\item Compute the vector $\vec{c}_{v}=\vec{c}_{1}.\textbf{V}$.
+
+\item Let $\vec{c}=[\vec{c}_{0}|\vec{c}_{v}]$.
+
+\item Compute $ z\leftarrow c_{2}-\vec{c}\vec{r}$(mod $q$).
+\end{enumerate}
+Output $0$ if $|z|<q/4$ and $1$ otherwise.
+
+\end{description}
+
+\subsection{Correctness}
+We prove correctness of our scheme as follow.
+\begin{lemma} 
+For certain parameter choices, our scheme is correct.
+\end{lemma}
+\begin{proof}
+ Recall that the ciphertext $\vec{ct}=(\vec{c}_{0},\vec{c}_{1},c_{2})$. For which $\vec{c}_{0}=\vec{s}^{T}\textbf{A}+\vec{e}^{T}_{0},  \vec{c}_{1}=\vec{s}^{T}(\textbf{B}+\textbf{W})+\vec{e}^{T}_{1}, c_{2}=\vec{s}^{T}\vec{u}+e+\lfloor \frac{q}{2} \rfloor m$, so
+\begin{equation}
+\vec{c}_{v}=\vec{c}_{1}.\textbf{V}=\vec{s}^{T}(\textbf{B}+\textbf{W}).\textbf{V}+\vec{e}^{T}_{1}.\textbf{V}=\vec{s}^{T}.\textbf{B}.\textbf{V}+\vec{s}^{T}.\textbf{W}.\textbf{V}+
+\vec{e}^{T}_{1}.\textbf{V}.
+\end{equation}
+It's easy to check that if $\langle \vec{v},\vec{w} \rangle=0$, then $\textbf{W}.\textbf{V}=\textbf{W}^{'}.\textbf{V}^{'}.\textbf{G}_{n,2,m}=\textbf{0}$. Then $\vec{c}_{v}=\vec{s}^{T}.\textbf{B}.\textbf{V}+\vec{e}^{T}_{1}.\textbf{V}$, so
+\begin{equation}
+\begin{aligned}
+\vec{c}&=[\vec{c}_{0}|\vec{c}_{v}]=[\vec{s}^{T}\textbf{A}+\vec{e}^{T}_{0}|\vec{s}^{T}.\textbf{B}.\textbf{V}+\vec{e}^{T}_{1}.\textbf{V}]=\vec{s}^{T}[\textbf{A}|\textbf{B}.\textbf{V}]+[\vec{e}^{T}_{0}|\vec{e}^{T}_{1}.\textbf{V}]\\
+&=\vec{s}^{T}[\textbf{A}|\textbf{U}]+[\vec{e}^{T}_{0}|\vec{e}^{T}_{1}.\textbf{V}]=\vec{s}^{T}\textbf{A}_{v}+[\vec{e}^{T}_{0}|\vec{e}^{T}_{1}.\textbf{V}].
+\end{aligned}
+\end{equation}
+And
+\begin{equation}
+\begin{aligned}
+z&=c_{2}-\vec{c}\vec{r}(mod\ q)=\vec{s}^{T}\vec{u}+e+\lfloor \frac{q}{2} \rfloor m-\vec{s}^{T}\vec{u}-[\vec{e}^{T}_{0}|\vec{e}^{T}_{1}.\textbf{V}]\vec{r}\\
+&=\lfloor \frac{q}{2} \rfloor m+\underbrace{e-[\vec{e}^{T}_{0}|\vec{e}^{T}_{1}.\textbf{V}]\vec{r}}_{\hat{\textbf{e}}}
+\end{aligned}
+\end{equation}
+If the norm $\|\hat{\textbf{e}}\|< q/4$, then $|z|< q/4$ if and only if $m=0$, or else $m=1$. In this condition, our scheme is correct.
+\end{proof}
